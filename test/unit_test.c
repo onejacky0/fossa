@@ -340,6 +340,22 @@ static const char *test_get_http_var(void) {
   ASSERT(ns_get_http_var(&body, "key", buf, 0) == -2);
   ASSERT(ns_get_http_var(&body, NULL, buf, sizeof(buf)) == -1);
 
+  /* TODO(mkm) broken url encoding should not be accepted
+     check standards and consider consensus among other implementations */
+  body.p = "key=broken%2";
+  body.len = strlen(body.p);
+  ASSERT(ns_get_http_var(&body, "key", buf, sizeof(buf)) < 0);
+
+  body.p = "key=broken%2x";
+  body.len = strlen(body.p);
+  ASSERT(ns_get_http_var(&body, "key", buf, sizeof(buf)) < 0);
+
+  /* TODO(mkm) keys should also be unescaped */
+  body.p = "key%20space=value";
+  body.len = strlen(body.p);
+  ASSERT(ns_get_http_var(&body, "key space", buf, sizeof(buf)) > 0);
+  ASSERT(strcmp(buf, "value") == 0);
+
   return NULL;
 }
 
